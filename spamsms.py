@@ -1,3 +1,4 @@
+
 from flask import Flask
 from threading import Thread
 import time
@@ -3294,11 +3295,51 @@ def run(phone, i):
         print(f"Vui lòng chờ {j} giây", end="\r")
         time.sleep(1)
 
+# --- DÁN ĐOẠN NÀY VÀO CUỐI FILE ---
+
+# 1. Hàm chạy vòng lặp spam (chạy ngầm)
+def che_do_spam_tu_dong(phone, count):
+    print(f"\n[SYSTEM] Bắt đầu spam {count} lần tới số {phone}")
+    try:
+        count = int(count)
+        for i in range(1, count + 1):
+            # Gọi lại hàm run() cũ của bạn ở đây
+            # Lưu ý: Hàm run() này phải được định nghĩa ở trên rồi
+            run(phone, i) 
+            
+            # Nghỉ 1 chút sau mỗi lần chạy (tùy chỉnh)
+            print(f"-> Xong lần {i}/{count}")
+            time.sleep(1) 
+    except Exception as e:
+        print(f"Lỗi: {e}")
+    print("[SYSTEM] Hoàn thành tác vụ!")
+
+# 2. Khởi tạo Web Server
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "<h3>Tool Spam đang chạy 24/7!</h3><p>Dùng link: /run?phone=0868595270&count=1000000000000000000000000000000000000000000000000000000000000000000000000000000000000 để chạy.</p>"
+
+@app.route('/run')
+def trigger_spam():
+    # Lấy dữ liệu từ link web
+    phone = request.args.get('phone')
+    count = request.args.get('count')
+    
+    if not phone or not count:
+        return "Thiếu thông tin! Ví dụ: /run?phone=0987654321&count=50"
+    
+    # Chạy spam ở luồng riêng (để không bị đơ web)
+    t = Thread(target=che_do_spam_tu_dong, args=(phone, count))
+    t.start()
+    
+    return f"Đang tiến hành spam {count} lần cho sđt {phone}. Kiểm tra Logs trên Render để xem."
+
+def keep_alive():
+    # Render yêu cầu port 0.0.0.0
+    app.run(host='0.0.0.0', port=8080)
+
 if __name__ == "__main__":
-    print("\033[1;34mSpamSmsByAnhCode\033[0m")  # Màu xanh dương đậm
-    phone = input("Nhập số điện thoại: ")
-  
-    count = int(input("Nhập số lần spam: "))
-    for i in range(1, count + 1):
-        run(phone, i)
+    keep_alive()
             
